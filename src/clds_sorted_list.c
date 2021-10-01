@@ -1419,7 +1419,7 @@ CLDS_SORTED_LIST_SET_VALUE_RESULT clds_sorted_list_set_value(CLDS_SORTED_LIST_HA
                                 {
                                     case CLDS_CONDITION_CHECK_ERROR:
                                     {
-                                        LogError("Condition check failed");
+                                        LogError("Condition check failed - %" PRI_MU_ENUM "", MU_ENUM_VALUE(CLDS_CONDITION_CHECK_RESULT, condition_check_result));
                                         if (previous_hp != NULL)
                                         {
                                             // let go of previous hazard pointer
@@ -1436,7 +1436,7 @@ CLDS_SORTED_LIST_SET_VALUE_RESULT clds_sorted_list_set_value(CLDS_SORTED_LIST_HA
 
                                     case CLDS_CONDITION_CHECK_NOT_MET:
                                     {
-                                        LogError("Condition check not met");
+                                        LogError("Condition check not met - %" PRI_MU_ENUM "", MU_ENUM_VALUE(CLDS_CONDITION_CHECK_RESULT, condition_check_result));
                                         if (previous_hp != NULL)
                                         {
                                             // let go of previous hazard pointer
