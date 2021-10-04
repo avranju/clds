@@ -18,6 +18,7 @@
 #include "c_pal/interlocked.h"
 #include "c_pal/sync.h"
 #include "c_util/interlocked_hl.h"
+#include "c_util/uuid.h"
 
 #include "c_logging/xlogging.h"
 
@@ -31,6 +32,8 @@
 #include "clds/clds_hash_table.h"
 
 static TEST_MUTEX_HANDLE test_serialize_mutex;
+
+#define XTEST_FUNCTION(A) void A(void)
 
 #define SEQ_NO_STATE_VALUES \
     SEQ_NO_NOT_USED, \
@@ -549,7 +552,10 @@ MU_DEFINE_ENUM(TEST_HASH_TABLE_ITEM_STATE, TEST_HASH_TABLE_ITEM_STATE_VALUES);
     CHAOS_TEST_ACTION_FIND, \
     CHAOS_TEST_ACTION_FIND_NOT_FOUND, \
     CHAOS_TEST_ACTION_SET_VALUE, \
-    CHAOS_TEST_ACTION_SET_VALUE_SAME_ITEM
+    CHAOS_TEST_ACTION_SET_VALUE_SAME_ITEM, \
+    CHAOS_TEST_ACTION_SET_VALUE_WITH_CONDITION_CHECK_OK, \
+    CHAOS_TEST_ACTION_SET_VALUE_WITH_CONDITION_CHECK_NOT_MET, \
+    CHAOS_TEST_ACTION_SET_VALUE_WITH_CONDITION_CHECK_ERROR
 
 MU_DEFINE_ENUM_WITHOUT_INVALID(CHAOS_TEST_ACTION, CHAOS_TEST_ACTION_VALUES);
 
@@ -583,7 +589,7 @@ TEST_FUNCTION_CLEANUP(method_cleanup)
     TEST_MUTEX_RELEASE(test_serialize_mutex);
 }
 
-TEST_FUNCTION(clds_hash_table_create_succeeds)
+XTEST_FUNCTION(clds_hash_table_create_succeeds)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -602,7 +608,7 @@ TEST_FUNCTION(clds_hash_table_create_succeeds)
     clds_hazard_pointers_destroy(hazard_pointers);
 }
 
-TEST_FUNCTION(clds_hash_table_insert_succeeds)
+XTEST_FUNCTION(clds_hash_table_insert_succeeds)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -627,7 +633,7 @@ TEST_FUNCTION(clds_hash_table_insert_succeeds)
     clds_hazard_pointers_destroy(hazard_pointers);
 }
 
-TEST_FUNCTION(clds_hash_table_delete_succeeds)
+XTEST_FUNCTION(clds_hash_table_delete_succeeds)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -657,7 +663,7 @@ TEST_FUNCTION(clds_hash_table_delete_succeeds)
     clds_hazard_pointers_destroy(hazard_pointers);
 }
 
-TEST_FUNCTION(clds_hash_table_insert_in_higher_level_buckets_array_returns_already_exists_for_items_left_in_the_lower_level_buckets)
+XTEST_FUNCTION(clds_hash_table_insert_in_higher_level_buckets_array_returns_already_exists_for_items_left_in_the_lower_level_buckets)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -697,7 +703,7 @@ TEST_FUNCTION(clds_hash_table_insert_in_higher_level_buckets_array_returns_alrea
     clds_hazard_pointers_destroy(hazard_pointers);
 }
 
-TEST_FUNCTION(clds_hash_table_set_value_succeeds)
+XTEST_FUNCTION(clds_hash_table_set_value_succeeds)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -723,7 +729,7 @@ TEST_FUNCTION(clds_hash_table_set_value_succeeds)
     clds_hazard_pointers_destroy(hazard_pointers);
 }
 
-TEST_FUNCTION(clds_hash_table_set_value_when_the_key_exists_on_a_lower_level_fails)
+XTEST_FUNCTION(clds_hash_table_set_value_when_the_key_exists_on_a_lower_level_fails)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -767,7 +773,7 @@ TEST_FUNCTION(clds_hash_table_set_value_when_the_key_exists_on_a_lower_level_fai
     CLDS_HASH_TABLE_NODE_RELEASE(TEST_ITEM, old_item);
 }
 
-TEST_FUNCTION(clds_hash_table_delete_after_set_value_succeeds)
+XTEST_FUNCTION(clds_hash_table_delete_after_set_value_succeeds)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -798,7 +804,7 @@ TEST_FUNCTION(clds_hash_table_delete_after_set_value_succeeds)
     clds_hazard_pointers_destroy(hazard_pointers);
 }
 
-TEST_FUNCTION(clds_hash_table_snapshot_works_with_10000_sequential_key_items)
+XTEST_FUNCTION(clds_hash_table_snapshot_works_with_10000_sequential_key_items)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -837,7 +843,7 @@ TEST_FUNCTION(clds_hash_table_snapshot_works_with_10000_sequential_key_items)
 /* Tests_SRS_CLDS_HASH_TABLE_42_035: [ clds_hash_table_insert shall decrement the count of pending write operations. ]*/
 /* Tests_SRS_CLDS_HASH_TABLE_42_036: [ clds_hash_table_insert shall wait for the counter to lock the table for writes to reach 0 and repeat. ]*/
 /* Tests_SRS_CLDS_HASH_TABLE_42_063: [ clds_hash_table_insert shall decrement the count of pending write operations. ]*/
-TEST_FUNCTION(clds_hash_table_snapshot_works_with_concurrent_inserts)
+XTEST_FUNCTION(clds_hash_table_snapshot_works_with_concurrent_inserts)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -893,7 +899,7 @@ TEST_FUNCTION(clds_hash_table_snapshot_works_with_concurrent_inserts)
     clds_hazard_pointers_destroy(hazard_pointers);
 }
 
-TEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_inserts)
+XTEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_inserts)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -962,7 +968,7 @@ TEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_inserts)
 /* Tests_SRS_CLDS_HASH_TABLE_42_040: [ clds_hash_table_delete shall decrement the count of pending write operations. ]*/
 /* Tests_SRS_CLDS_HASH_TABLE_42_041: [ clds_hash_table_delete shall wait for the counter to lock the table for writes to reach 0 and repeat. ]*/
 /* Tests_SRS_CLDS_HASH_TABLE_42_042: [ clds_hash_table_insert shall decrement the count of pending write operations. ]*/
-TEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_deletes)
+XTEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_deletes)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -1048,7 +1054,7 @@ TEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_deletes)
 /* Tests_SRS_CLDS_HASH_TABLE_42_046: [ clds_hash_table_delete_key_value shall decrement the count of pending write operations. ]*/
 /* Tests_SRS_CLDS_HASH_TABLE_42_047: [ clds_hash_table_delete_key_value shall wait for the counter to lock the table for writes to reach 0 and repeat. ]*/
 /* Tests_SRS_CLDS_HASH_TABLE_42_048: [ clds_hash_table_delete_key_value shall decrement the count of pending write operations. ]*/
-TEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_delete_key_value)
+XTEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_delete_key_value)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -1134,7 +1140,7 @@ TEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_delete_key
 /* Tests_SRS_CLDS_HASH_TABLE_42_052: [ clds_hash_table_remove shall decrement the count of pending write operations. ]*/
 /* Tests_SRS_CLDS_HASH_TABLE_42_053: [ clds_hash_table_remove shall wait for the counter to lock the table for writes to reach 0 and repeat. ]*/
 /* Tests_SRS_CLDS_HASH_TABLE_42_054: [ clds_hash_table_remove shall decrement the count of pending write operations. ]*/
-TEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_remove)
+XTEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_remove)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -1220,7 +1226,7 @@ TEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_remove)
 /* Tests_SRS_CLDS_HASH_TABLE_42_058: [ clds_hash_table_set_value shall decrement the count of pending write operations. ]*/
 /* Tests_SRS_CLDS_HASH_TABLE_42_059: [ clds_hash_table_set_value shall wait for the counter to lock the table for writes to reach 0 and repeat. ]*/
 /* Tests_SRS_CLDS_HASH_TABLE_42_060: [ clds_hash_table_set_value shall decrement the count of pending write operations. ]*/
-TEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_set_value)
+XTEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_set_value)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -1284,7 +1290,7 @@ TEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_set_value)
     clds_hazard_pointers_destroy(hazard_pointers);
 }
 
-TEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_find)
+XTEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_find)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -1358,7 +1364,139 @@ TEST_FUNCTION(clds_hash_table_snapshot_works_with_multiple_concurrent_find)
     clds_hazard_pointers_destroy(hazard_pointers);
 }
 
-TEST_FUNCTION(clds_hash_table_set_value_with_the_same_value_succeeds_with_initial_bucket_size_1)
+typedef struct TEST_ITEM2_KEY_TAG {
+    uint32_t key;
+    UUID_T etag;
+} TEST_ITEM2_KEY;
+
+typedef struct TEST_ITEM2_TAG
+{
+    TEST_ITEM2_KEY key;
+} TEST_ITEM2;
+
+DECLARE_HASH_TABLE_NODE_TYPE(TEST_ITEM2)
+
+static int test_key_compare2(void* key1, void* key2)
+{
+    int result;
+
+    TEST_ITEM2_KEY* k1 = (TEST_ITEM2_KEY*)key1;
+    TEST_ITEM2_KEY* k2 = (TEST_ITEM2_KEY*)key2;
+
+    if ((int64_t)k1->key < (int64_t)k2->key)
+    {
+        result = -1;
+    }
+    else if ((int64_t)k1->key > (int64_t)k2->key)
+    {
+        result = 1;
+    }
+    else
+    {
+        result = 0;
+    }
+
+    return result;
+}
+
+static CLDS_CONDITION_CHECK_RESULT etag_condition_check(void* context, void* new_key, void* old_key)
+{
+    ASSERT_ARE_EQUAL(void_ptr, (void*)0x42, context);
+
+    TEST_ITEM2_KEY* item_new_key = (TEST_ITEM2_KEY*)new_key;
+    TEST_ITEM2_KEY* item_old_key = (TEST_ITEM2_KEY*)old_key;
+    CLDS_CONDITION_CHECK_RESULT result;
+
+    if (item_new_key == NULL || item_old_key == NULL)
+    {
+        result = CLDS_CONDITION_CHECK_ERROR;
+    }
+    else if (memcmp(item_new_key->etag, item_old_key->etag, sizeof(UUID_T)) != 0)
+    {
+        result = CLDS_CONDITION_CHECK_NOT_MET;
+    }
+    else
+    {
+        result = CLDS_CONDITION_CHECK_OK;
+    }
+
+    return result;
+}
+
+XTEST_FUNCTION(clds_hash_table_set_value_with_condition_check_succeeds)
+{
+    // arrange
+    CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
+    ASSERT_IS_NOT_NULL(hazard_pointers);
+    CLDS_HAZARD_POINTERS_THREAD_HANDLE hazard_pointers_thread = clds_hazard_pointers_register_thread(hazard_pointers);
+    ASSERT_IS_NOT_NULL(hazard_pointers_thread);
+    volatile_atomic int64_t sequence_number = 45;
+    CLDS_HASH_TABLE_HANDLE hash_table = clds_hash_table_create(test_compute_hash, test_key_compare2, 1, hazard_pointers, &sequence_number, test_skipped_seq_no_ignore, (void*)0x5556);
+    ASSERT_IS_NOT_NULL(hash_table);
+
+    CLDS_HASH_TABLE_INSERT_RESULT result;
+    CLDS_HASH_TABLE_ITEM* item = CLDS_HASH_TABLE_NODE_CREATE(TEST_ITEM2, NULL, NULL);
+    TEST_ITEM2* test_item = CLDS_HASH_TABLE_GET_VALUE(TEST_ITEM2, item);
+    test_item->key.key = 0;
+    ASSERT_ARE_EQUAL(int, 0, UUID_generate(&test_item->key.etag));
+
+    int64_t insert_seq_no;
+    result = clds_hash_table_insert(hash_table, hazard_pointers_thread, (void*)&test_item->key, item, &insert_seq_no);
+    ASSERT_ARE_EQUAL(CLDS_HASH_TABLE_INSERT_RESULT, CLDS_HASH_TABLE_INSERT_OK, result);
+
+    CLDS_HASH_TABLE_ITEM* old_item;
+
+    // act
+    CLDS_HASH_TABLE_SET_VALUE_RESULT set_value_result = clds_hash_table_set_value(hash_table, hazard_pointers_thread, (void*)&test_item->key, item, etag_condition_check, (void *)0x42, &old_item, &insert_seq_no);
+
+    // assert
+    ASSERT_ARE_EQUAL(CLDS_HASH_TABLE_SET_VALUE_RESULT, CLDS_HASH_TABLE_SET_VALUE_OK, set_value_result);
+
+    // cleanup
+    clds_hash_table_destroy(hash_table);
+    clds_hazard_pointers_destroy(hazard_pointers);
+}
+
+XTEST_FUNCTION(clds_hash_table_set_value_with_condition_check_fails_with_not_met)
+{
+    // arrange
+    CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
+    ASSERT_IS_NOT_NULL(hazard_pointers);
+    CLDS_HAZARD_POINTERS_THREAD_HANDLE hazard_pointers_thread = clds_hazard_pointers_register_thread(hazard_pointers);
+    ASSERT_IS_NOT_NULL(hazard_pointers_thread);
+    volatile_atomic int64_t sequence_number = 45;
+    CLDS_HASH_TABLE_HANDLE hash_table = clds_hash_table_create(test_compute_hash, test_key_compare2, 1, hazard_pointers, &sequence_number, test_skipped_seq_no_ignore, (void*)0x5556);
+    ASSERT_IS_NOT_NULL(hash_table);
+
+    CLDS_HASH_TABLE_INSERT_RESULT result;
+    CLDS_HASH_TABLE_ITEM* item = CLDS_HASH_TABLE_NODE_CREATE(TEST_ITEM2, NULL, NULL);
+    TEST_ITEM2* test_item = CLDS_HASH_TABLE_GET_VALUE(TEST_ITEM2, item);
+    test_item->key.key = 0;
+    ASSERT_ARE_EQUAL(int, 0, UUID_generate(&test_item->key.etag));
+
+    int64_t insert_seq_no;
+    result = clds_hash_table_insert(hash_table, hazard_pointers_thread, (void*)&test_item->key, item, &insert_seq_no);
+    ASSERT_ARE_EQUAL(CLDS_HASH_TABLE_INSERT_RESULT, CLDS_HASH_TABLE_INSERT_OK, result);
+
+    CLDS_HASH_TABLE_ITEM* old_item;
+
+    // act
+    CLDS_HASH_TABLE_ITEM* item2 = CLDS_HASH_TABLE_NODE_CREATE(TEST_ITEM2, NULL, NULL);
+    TEST_ITEM2* test_item2 = CLDS_HASH_TABLE_GET_VALUE(TEST_ITEM2, item2);
+    test_item2->key.key = 0;
+    ASSERT_ARE_EQUAL(int, 0, UUID_generate(&test_item2->key.etag));
+    CLDS_HASH_TABLE_SET_VALUE_RESULT set_value_result = clds_hash_table_set_value(hash_table, hazard_pointers_thread, (void*)&test_item2->key, item2, etag_condition_check, (void*)0x42, &old_item, &insert_seq_no);
+
+    // assert
+    ASSERT_ARE_EQUAL(CLDS_HASH_TABLE_SET_VALUE_RESULT, CLDS_HASH_TABLE_SET_VALUE_CONDITION_NOT_MET, set_value_result);
+
+    // cleanup
+    CLDS_HASH_TABLE_NODE_RELEASE(TEST_ITEM2, item2);
+    clds_hash_table_destroy(hash_table);
+    clds_hazard_pointers_destroy(hazard_pointers);
+}
+
+XTEST_FUNCTION(clds_hash_table_set_value_with_the_same_value_succeeds_with_initial_bucket_size_1)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -1392,7 +1530,7 @@ TEST_FUNCTION(clds_hash_table_set_value_with_the_same_value_succeeds_with_initia
     clds_hazard_pointers_destroy(hazard_pointers);
 }
 
-TEST_FUNCTION(clds_hash_table_set_value_with_the_same_value_succeeds_with_initial_bucket_size_1024)
+XTEST_FUNCTION(clds_hash_table_set_value_with_the_same_value_succeeds_with_initial_bucket_size_1024)
 {
     // arrange
     CLDS_HAZARD_POINTERS_HANDLE hazard_pointers = clds_hazard_pointers_create();
@@ -1426,7 +1564,7 @@ TEST_FUNCTION(clds_hash_table_set_value_with_the_same_value_succeeds_with_initia
     clds_hazard_pointers_destroy(hazard_pointers);
 }
 
-TEST_FUNCTION(clds_hash_table_set_value_with_same_item_after_bucket_count_increase_allows_a_colliding_key_to_be_added_to_same_bucket)
+XTEST_FUNCTION(clds_hash_table_set_value_with_same_item_after_bucket_count_increase_allows_a_colliding_key_to_be_added_to_same_bucket)
 {
     // the test does the following:
     // - start with a 1 bucket hash table with keys being "integer modulo 4"
@@ -1507,6 +1645,33 @@ static bool get_item_and_change_state(CHAOS_TEST_ITEM_DATA* items, int item_coun
     } while (1);
 
     return result;
+}
+
+static CLDS_CONDITION_CHECK_RESULT condition_check_ok(void* context, void* new_key, void* old_key)
+{
+    (void)new_key;
+    (void)old_key;
+
+    ASSERT_ARE_EQUAL(void_ptr, (void*)0x42, context);
+    return CLDS_CONDITION_CHECK_OK;
+}
+
+static CLDS_CONDITION_CHECK_RESULT condition_check_not_met(void* context, void* new_key, void* old_key)
+{
+    (void)new_key;
+    (void)old_key;
+
+    ASSERT_ARE_EQUAL(void_ptr, (void*)0x42, context);
+    return CLDS_CONDITION_CHECK_NOT_MET;
+}
+
+static CLDS_CONDITION_CHECK_RESULT condition_check_error(void* context, void* new_key, void* old_key)
+{
+    (void)new_key;
+    (void)old_key;
+
+    ASSERT_ARE_EQUAL(void_ptr, (void*)0x42, context);
+    return CLDS_CONDITION_CHECK_ERROR;
 }
 
 static int chaos_thread(void* arg)
@@ -1662,7 +1827,7 @@ static int chaos_thread(void* arg)
                 TEST_ITEM* item_payload = CLDS_HASH_TABLE_GET_VALUE(TEST_ITEM, chaos_test_context->items[item_index].item);
                 item_payload->key = item_index + 1;
 
-                ASSERT_ARE_EQUAL(CLDS_HASH_TABLE_INSERT_RESULT, CLDS_HASH_TABLE_INSERT_OK, clds_hash_table_set_value(chaos_test_context->hash_table, chaos_thread_data->clds_hazard_pointers_thread, (void*)(uintptr_t)(item_index + 1), chaos_test_context->items[item_index].item, NULL, NULL, &old_item, &seq_no));
+                ASSERT_ARE_EQUAL(CLDS_HASH_TABLE_INSERT_RESULT, CLDS_HASH_TABLE_SET_VALUE_OK, clds_hash_table_set_value(chaos_test_context->hash_table, chaos_thread_data->clds_hazard_pointers_thread, (void*)(uintptr_t)(item_index + 1), chaos_test_context->items[item_index].item, NULL, NULL, &old_item, &seq_no));
                 ASSERT_ARE_NOT_EQUAL(int64_t, 0, seq_no);
                 mark_seq_no_as_used(chaos_test_context, seq_no);
 
@@ -1679,12 +1844,57 @@ static int chaos_thread(void* arg)
             
                 CLDS_HASH_TABLE_NODE_INC_REF(TEST_ITEM, chaos_test_context->items[item_index].item);
             
-                ASSERT_ARE_EQUAL(CLDS_HASH_TABLE_INSERT_RESULT, CLDS_HASH_TABLE_INSERT_OK, clds_hash_table_set_value(chaos_test_context->hash_table, chaos_thread_data->clds_hazard_pointers_thread, (void*)(uintptr_t)(item_index + 1), chaos_test_context->items[item_index].item, NULL, NULL, &old_item, &seq_no));
+                ASSERT_ARE_EQUAL(CLDS_HASH_TABLE_INSERT_RESULT, CLDS_HASH_TABLE_SET_VALUE_OK, clds_hash_table_set_value(chaos_test_context->hash_table, chaos_thread_data->clds_hazard_pointers_thread, (void*)(uintptr_t)(item_index + 1), chaos_test_context->items[item_index].item, NULL, NULL, &old_item, &seq_no));
                 ASSERT_ARE_NOT_EQUAL(int64_t, 0, seq_no);
                 mark_seq_no_as_used(chaos_test_context, seq_no);
 
                 CLDS_HASH_TABLE_NODE_RELEASE(TEST_ITEM, old_item);
             
+                (void)interlocked_exchange(&chaos_test_context->items[item_index].item_state, TEST_HASH_TABLE_ITEM_USED);
+            }
+            break;
+
+        case CHAOS_TEST_ACTION_SET_VALUE_WITH_CONDITION_CHECK_OK:
+            if (get_item_and_change_state(chaos_test_context->items, CHAOS_ITEM_COUNT, TEST_HASH_TABLE_ITEM_SETTING_VALUE, TEST_HASH_TABLE_ITEM_USED, &item_index))
+            {
+                CLDS_HASH_TABLE_ITEM* old_item;
+
+                CLDS_HASH_TABLE_NODE_INC_REF(TEST_ITEM, chaos_test_context->items[item_index].item);
+
+                ASSERT_ARE_EQUAL(CLDS_HASH_TABLE_INSERT_RESULT, CLDS_HASH_TABLE_SET_VALUE_OK, clds_hash_table_set_value(chaos_test_context->hash_table, chaos_thread_data->clds_hazard_pointers_thread, (void*)(uintptr_t)(item_index + 1), chaos_test_context->items[item_index].item, condition_check_ok, (void*)0x42, &old_item, &seq_no));
+                ASSERT_ARE_NOT_EQUAL(int64_t, 0, seq_no);
+                mark_seq_no_as_used(chaos_test_context, seq_no);
+
+                CLDS_HASH_TABLE_NODE_RELEASE(TEST_ITEM, old_item);
+
+                (void)interlocked_exchange(&chaos_test_context->items[item_index].item_state, TEST_HASH_TABLE_ITEM_USED);
+            }
+            break;
+
+        case CHAOS_TEST_ACTION_SET_VALUE_WITH_CONDITION_CHECK_NOT_MET:
+            if (get_item_and_change_state(chaos_test_context->items, CHAOS_ITEM_COUNT, TEST_HASH_TABLE_ITEM_SETTING_VALUE, TEST_HASH_TABLE_ITEM_USED, &item_index))
+            {
+                CLDS_HASH_TABLE_ITEM* old_item;
+
+                CLDS_HASH_TABLE_NODE_INC_REF(TEST_ITEM, chaos_test_context->items[item_index].item);
+
+                ASSERT_ARE_EQUAL(CLDS_HASH_TABLE_INSERT_RESULT, CLDS_HASH_TABLE_SET_VALUE_CONDITION_NOT_MET, clds_hash_table_set_value(chaos_test_context->hash_table, chaos_thread_data->clds_hazard_pointers_thread, (void*)(uintptr_t)(item_index + 1), chaos_test_context->items[item_index].item, condition_check_not_met, (void*)0x42, &old_item, &seq_no));
+                ASSERT_ARE_NOT_EQUAL(int64_t, 0, seq_no);
+
+                (void)interlocked_exchange(&chaos_test_context->items[item_index].item_state, TEST_HASH_TABLE_ITEM_USED);
+            }
+            break;
+
+        case CHAOS_TEST_ACTION_SET_VALUE_WITH_CONDITION_CHECK_ERROR:
+            if (get_item_and_change_state(chaos_test_context->items, CHAOS_ITEM_COUNT, TEST_HASH_TABLE_ITEM_SETTING_VALUE, TEST_HASH_TABLE_ITEM_USED, &item_index))
+            {
+                CLDS_HASH_TABLE_ITEM* old_item;
+
+                CLDS_HASH_TABLE_NODE_INC_REF(TEST_ITEM, chaos_test_context->items[item_index].item);
+
+                ASSERT_ARE_EQUAL(CLDS_HASH_TABLE_INSERT_RESULT, CLDS_HASH_TABLE_SET_VALUE_ERROR, clds_hash_table_set_value(chaos_test_context->hash_table, chaos_thread_data->clds_hazard_pointers_thread, (void*)(uintptr_t)(item_index + 1), chaos_test_context->items[item_index].item, condition_check_error, (void*)0x42, &old_item, &seq_no));
+                ASSERT_ARE_NOT_EQUAL(int64_t, 0, seq_no);
+
                 (void)interlocked_exchange(&chaos_test_context->items[item_index].item_state, TEST_HASH_TABLE_ITEM_USED);
             }
             break;
